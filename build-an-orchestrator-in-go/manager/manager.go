@@ -15,7 +15,6 @@ type Manager struct {
 	Workers       []string
 	WorkerTaskMap map[string][]uuid.UUID
 	TaskWorkerMap map[uuid.UUID]string
-	stateMachine  task.StateMachine
 }
 
 func (m *Manager) SelectWorker() {

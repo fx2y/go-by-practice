@@ -67,8 +67,9 @@ func NewConfig(t *Task) *Config {
 }
 
 type Docker struct {
-	Client *client.Client
-	Config Config
+	Client      *client.Client
+	Config      Config
+	ContainerId string
 }
 
 func NewDocker(c *Config) *Docker {
@@ -126,6 +127,8 @@ func (d *Docker) Run() DockerResult {
 		return DockerResult{Error: err}
 	}
 
+	d.ContainerId = resp.ID
+
 	out, err := d.Client.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
 		log.Printf("Error getting logs for container %s: %v\n", resp.ID, err)
@@ -137,16 +140,16 @@ func (d *Docker) Run() DockerResult {
 	return DockerResult{Action: "start", ContainerId: resp.ID, Result: "success"}
 }
 
-func (d *Docker) Stop(id string) DockerResult {
-	log.Printf("Attempting to stop container %v", id)
+func (d *Docker) Stop() DockerResult {
+	log.Printf("Attempting to stop container %v", d.ContainerId)
 	ctx := context.Background()
-	err := d.Client.ContainerStop(ctx, id, nil)
+	err := d.Client.ContainerStop(ctx, d.ContainerId, nil)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
 
-	err = d.Client.ContainerRemove(ctx, id, types.ContainerRemoveOptions{RemoveVolumes: true, Force: false, RemoveLinks: false})
+	err = d.Client.ContainerRemove(ctx, d.ContainerId, types.ContainerRemoveOptions{RemoveVolumes: true, Force: false, RemoveLinks: false})
 	if err != nil {
 		panic(err)
 	}
